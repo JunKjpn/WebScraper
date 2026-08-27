@@ -21,6 +21,9 @@ def scrape_books(url: str) -> list[dict]:
             price = article.select_one(".price_color")
             availability = article.select_one(".availability")
 
+            book_url = urljoin(url, title["href"]) if title else None
+            category = scrape_book_category(book_url) if book_url else None
+
             books.append(
                 {
                     "title": title["title"] if title else None,
@@ -36,11 +39,8 @@ def scrape_books(url: str) -> list[dict]:
                         if availability
                         else None
                     ),
-                    "url": (
-                        urljoin(url, title["href"])
-                        if title
-                        else None
-                    ),
+                    "url": book_url,
+                    "category": category,
                 }
             )
 
@@ -52,6 +52,19 @@ def scrape_books(url: str) -> list[dict]:
             url = None
 
     return books
+
+def scrape_book_category(url: str) -> str | None:
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    breadcrumb = soup.select("ul.breadcrumb li")
+
+    if len(breadcrumb) >= 3:
+        return breadcrumb[2].get_text(strip=True)
+
+    return None
 
 def parse_price(price: str) -> float:
     return float(price.replace("£", "").replace("Â", "").strip())
