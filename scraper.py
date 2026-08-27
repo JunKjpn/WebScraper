@@ -93,6 +93,36 @@ def scrape_books(url: str) -> list[dict]:
 
     return books
 
+def validate_books(books: list[dict]) -> list[dict]:
+    valid_books = []
+
+    for book in books:
+        if not book["title"]:
+            logger.warning("タイトルが取得できないデータを除外しました")
+            continue
+
+        if book["price"] is None:
+            logger.warning(
+                f"価格が取得できないデータを除外しました: {book['title']}"
+            )
+            continue
+
+        if book["price"] < 0:
+            logger.warning(
+                f"不正な価格のデータを除外しました: {book['title']}"
+            )
+            continue
+
+        if not book["url"]:
+            logger.warning(
+                f"URLが取得できないデータを除外しました: {book['title']}"
+            )
+            continue
+
+        valid_books.append(book)
+
+    return valid_books
+
 def create_dataframe(books: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(books)
 
@@ -101,6 +131,8 @@ def save_to_csv(df: pd.DataFrame, filepath: str) -> None:
 
 def main():
     books = scrape_books(URL)
+    books = validate_books(books)
+
     df = create_dataframe(books)
 
     logger.info(f"取得件数: {len(df)}")
