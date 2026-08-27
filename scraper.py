@@ -23,6 +23,13 @@ RATING_MAP = {
     "Four": 4,
     "Five": 5,
 }
+COLUMNS = [
+    "title",
+    "price",
+    "availability",
+    "rating",
+    "url",
+]
 
 logging.basicConfig(
     level=logging.INFO,
@@ -169,7 +176,13 @@ def parse_price(price: str) -> float:
     return float(price.replace("£", "").replace("Â", "").strip() )
 
 def create_dataframe(books: list[dict]) -> pd.DataFrame:
-    return pd.DataFrame(books)
+    df = pd.DataFrame(books, columns=COLUMNS)
+
+    df["price"] = df["price"].astype(float)
+    df["rating"] = df["rating"].astype(int)
+    df["availability"] = df["availability"].astype(bool)
+
+    return df
 
 def save_to_csv(df: pd.DataFrame, filepath: Path) -> None:
     filepath.parent.mkdir(parents=True, exist_ok=True)
