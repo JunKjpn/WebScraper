@@ -1,5 +1,7 @@
 from unittest.mock import patch, Mock
 
+import requests
+
 from webscraper.scraper import parse_price, parse_availability, parse_rating, scrape_books
 
 TEST_HTML = """
@@ -124,3 +126,12 @@ def test_scrape_books_pagination(mock_get):
     assert books[1]["rating"] == 5
 
     assert mock_get.call_count == 2
+
+@patch("webscraper.scraper.session.get")
+def test_scrape_books_request_error(mock_get):
+    mock_get.side_effect = requests.RequestException("Connection timeout")
+
+    books = scrape_books("https://books.toscrape.com/")
+
+    assert books == []
+    assert mock_get.call_count == 1
