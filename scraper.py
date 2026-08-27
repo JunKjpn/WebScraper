@@ -11,36 +11,38 @@ def scrape_books(url: str) -> list[dict]:
     books = []
 
     while url:
-        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-        response.raise_for_status()
+        session = requests.Session()
+        session.headers.update({"User-Agent": "Mozilla/5.0"})
 
-        soup = BeautifulSoup(response.content, "html.parser")
+        try:
+            response = session.get(url, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"取得失敗: {url}")
+            print(f"エラー: {e}")
+            continue
+
+        soup = BeautifulSoup(response.text, "html.parser")
 
         for article in soup.select("article.product_pod"):
             title = article.select_one("h3 a")
             price = article.select_one(".price_color")
             availability = article.select_one(".availability")
 
-            book_url = urljoin(url, title["href"]) if title else None
-            category = scrape_book_category(book_url) if book_url else None
-
             books.append(
                 {
                     "title": title["title"] if title else None,
-                    "price": (
-                        parse_price(price.get_text(strip=True))
-                        if price
-                        else None
-                    ),
+                    "price": price.get_text(strip=True) if price else None,
                     "availability": (
-                        parse_availability(
-                            availability.get_text(" ", strip=True)
-                        )
+                        availability.get_text(" ", strip=True)
                         if availability
                         else None
                     ),
-                    "url": book_url,
-                    "category": category,
+                    "url": (
+                        urljoin(url, title["href"])
+                        if title
+                        else None
+                    ),
                 }
             )
 
@@ -53,24 +55,6 @@ def scrape_books(url: str) -> list[dict]:
 
     return books
 
-def scrape_book_category(url: str) -> str | None:
-    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-    response.raise_for_status()
-
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    breadcrumb = soup.select("ul.breadcrumb li")
-
-    if len(breadcrumb) >= 3:
-        return breadcrumb[2].get_text(strip=True)
-
-    return None
-
-def parse_price(price: str) -> float:
-    return float(price.replace("£", "").replace("Â", "").strip())
-
-def parse_availability(availability: str) -> bool:
-    return "In stock" in availability
 
 def main():
     books = scrape_books(URL)
