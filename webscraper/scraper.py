@@ -12,7 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 URL = "https://books.toscrape.com/"
-OUTPUT_DIR = Path("output")
+OUTPUT_DIR = Path("../output")
 REQUEST_TIMEOUT = 10
 REQUEST_INTERVAL = 1
 USER_AGENT = "Mozilla/5.0"
@@ -174,6 +174,9 @@ def validate_books(books: list[dict]) -> list[dict]:
 
 def parse_price(price: str) -> float:
     return float(price.replace("£", "").replace("Â", "").strip() )
+
+def parse_availability(availability: str) -> bool:
+    return "In stock" in availability
 
 def create_dataframe(books: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(books, columns=COLUMNS)
