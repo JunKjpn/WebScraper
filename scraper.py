@@ -16,6 +16,13 @@ OUTPUT_DIR = Path("output")
 REQUEST_TIMEOUT = 10
 REQUEST_INTERVAL = 1
 USER_AGENT = "Mozilla/5.0"
+RATING_MAP = {
+    "One": 1,
+    "Two": 2,
+    "Three": 3,
+    "Four": 4,
+    "Five": 5,
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,11 +72,22 @@ def scrape_books(url: str) -> list[dict]:
             title = article.select_one("h3 a")
             price = article.select_one(".price_color")
             availability = article.select_one(".availability")
+            rating = article.select_one(".star-rating")
+
+            rating_value = None
+
+            if rating:
+                rating_classes = rating.get("class", [])
+
+                for class_name in rating_classes:
+                    if class_name in RATING_MAP:
+                        rating_value = RATING_MAP[class_name]
+                        break
 
             books.append(
                 {
                     "title": title["title"] if title else None,
-                    "price": price.get_text(strip=True) if price else None,
+                    "price": (parse_price(price.get_text(strip=True)) if price else None),
                     "availability": (
                         availability.get_text(" ", strip=True)
                         if availability
@@ -80,6 +98,7 @@ def scrape_books(url: str) -> list[dict]:
                         if title
                         else None
                     ),
+                    "rating": rating_value,
                 }
             )
 
@@ -124,6 +143,9 @@ def validate_books(books: list[dict]) -> list[dict]:
         valid_books.append(book)
 
     return valid_books
+
+def parse_price(price: str) -> float:
+    return float(price.replace("£", "").replace("Â", "").strip() )
 
 def create_dataframe(books: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(books)
