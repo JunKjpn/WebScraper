@@ -6,6 +6,8 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 URL = "https://books.toscrape.com/"
 OUTPUT_FILE = "output/books.csv"
@@ -26,7 +28,20 @@ def scrape_books(url: str) -> list[dict]:
 
     while url:
         session = requests.Session()
+
         session.headers.update({"User-Agent": USER_AGENT})
+
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["GET"],
+        )
+
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
 
         try:
             response = session.get(url, timeout=REQUEST_TIMEOUT)
