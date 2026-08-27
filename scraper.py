@@ -11,18 +11,15 @@ def scrape_books(url: str) -> list[dict]:
     books = []
 
     while url:
-        session = requests.Session()
-        session.headers.update({"User-Agent": "Mozilla/5.0"})
-
         try:
-            response = session.get(url, timeout=10)
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
-            print(f"取得失敗: {url}")
+            print(f"取得に失敗しました: {url}")
             print(f"エラー: {e}")
-            continue
+            break
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.content, "html.parser")
 
         for article in soup.select("article.product_pod"):
             title = article.select_one("h3 a")
