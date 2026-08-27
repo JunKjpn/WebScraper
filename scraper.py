@@ -69,16 +69,21 @@ def scrape_books(url: str) -> list[dict]:
 
     return books
 
+def create_dataframe(books: list[dict]) -> pd.DataFrame:
+    return pd.DataFrame(books)
+
+def save_to_csv(df: pd.DataFrame, filepath: str) -> None:
+    df.to_csv(filepath, index=False, encoding="utf-8-sig")
 
 def main():
     books = scrape_books(URL)
 
-    df = pd.DataFrame(books)
+    df = create_dataframe(books)
 
     print(f"取得件数: {len(df)}")
     print(df.head())
 
-    df.to_csv("output/books.csv", index=False, encoding="utf-8-sig")
+    save_to_csv(df, "output/books.csv")
 
 
 if __name__ == "__main__":
