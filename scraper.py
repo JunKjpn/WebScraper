@@ -1,3 +1,5 @@
+import time
+
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -5,6 +7,7 @@ from urllib.parse import urljoin
 
 
 URL = "https://books.toscrape.com/"
+REQUEST_INTERVAL = 1
 
 
 def scrape_books(url: str) -> list[dict]:
@@ -52,6 +55,8 @@ def scrape_books(url: str) -> list[dict]:
             url = urljoin(url, next_link["href"])
         else:
             url = None
+
+        time.sleep(REQUEST_INTERVAL)
 
     return books
 
