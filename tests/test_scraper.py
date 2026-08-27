@@ -2,7 +2,8 @@ from unittest.mock import patch, Mock
 
 import requests
 
-from webscraper.scraper import parse_price, parse_availability, parse_rating, scrape_books, validate_books
+from webscraper.scraper import parse_price, parse_availability, parse_rating, scrape_books, validate_books, \
+    create_dataframe
 
 TEST_HTML = """
 <html>
@@ -200,3 +201,41 @@ def test_validate_books():
 
     assert len(valid_books) == 1
     assert valid_books[0]["title"] == "Valid Book"
+
+def test_create_dataframe():
+    books = [
+        {
+            "title": "Book One",
+            "price": 19.99,
+            "availability": True,
+            "rating": 3,
+            "url": "https://example.com/book-one",
+        },
+        {
+            "title": "Book Two",
+            "price": 29.99,
+            "availability": False,
+            "rating": 5,
+            "url": "https://example.com/book-two",
+        },
+    ]
+
+    df = create_dataframe(books)
+
+    assert list(df.columns) == [
+        "title",
+        "price",
+        "availability",
+        "rating",
+        "url",
+    ]
+
+    assert len(df) == 2
+
+    assert df["price"].dtype == "float64"
+    assert df["rating"].dtype == "int64"
+    assert df["availability"].dtype == "bool"
+    assert df.loc[0, "title"] == "Book One"
+    assert df.loc[0, "price"] == 19.99
+    assert df.loc[0, "availability"] == True
+    assert df.loc[0, "rating"] == 3
