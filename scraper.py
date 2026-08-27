@@ -7,8 +7,10 @@ from urllib.parse import urljoin
 
 
 URL = "https://books.toscrape.com/"
+OUTPUT_FILE = "output/books.csv"
+REQUEST_TIMEOUT = 10
 REQUEST_INTERVAL = 1
-
+USER_AGENT = "Mozilla/5.0"
 
 def scrape_books(url: str) -> list[dict]:
     books = []
@@ -16,10 +18,10 @@ def scrape_books(url: str) -> list[dict]:
 
     while url:
         session = requests.Session()
-        session.headers.update({"User-Agent": "Mozilla/5.0"})
+        session.headers.update({"User-Agent": USER_AGENT})
 
         try:
-            response = session.get(url, timeout=10)
+            response = session.get(url, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
         except requests.RequestException as e:
             print(f"取得に失敗しました: {url}")
@@ -77,13 +79,12 @@ def save_to_csv(df: pd.DataFrame, filepath: str) -> None:
 
 def main():
     books = scrape_books(URL)
-
     df = create_dataframe(books)
 
     print(f"取得件数: {len(df)}")
     print(df.head())
 
-    save_to_csv(df, "output/books.csv")
+    save_to_csv(df, OUTPUT_FILE)
 
 
 if __name__ == "__main__":
