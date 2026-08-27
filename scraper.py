@@ -1,5 +1,6 @@
 import logging
 import time
+from pathlib import Path
 
 import requests
 import pandas as pd
@@ -10,7 +11,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 URL = "https://books.toscrape.com/"
-OUTPUT_FILE = "output/books.csv"
+OUTPUT_FILE = Path("output/books.csv")
 REQUEST_TIMEOUT = 10
 REQUEST_INTERVAL = 1
 USER_AGENT = "Mozilla/5.0"
@@ -126,8 +127,12 @@ def validate_books(books: list[dict]) -> list[dict]:
 def create_dataframe(books: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(books)
 
-def save_to_csv(df: pd.DataFrame, filepath: str) -> None:
+def save_to_csv(df: pd.DataFrame, filepath: Path) -> None:
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
     df.to_csv(filepath, index=False, encoding="utf-8-sig")
+
+    logger.info(f"CSVを保存しました: {filepath}")
 
 def main():
     books = scrape_books(URL)
