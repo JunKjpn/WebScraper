@@ -25,6 +25,48 @@ TEST_HTML = """
 </html>
 """
 
+TEST_HTML_PAGE_1 = """
+<html>
+<body>
+<article class="product_pod">
+    <h3>
+        <a href="catalogue/book_1/index.html"
+           title="Book One">
+            Book One
+        </a>
+    </h3>
+    <p class="price_color">£10.00</p>
+    <p class="instock availability">In stock</p>
+    <p class="star-rating One"></p>
+</article>
+
+<ul class="pager">
+    <li class="next">
+        <a href="page-2.html">next</a>
+    </li>
+</ul>
+</body>
+</html>
+"""
+
+TEST_HTML_PAGE_2 = """
+<html>
+<body>
+<article class="product_pod">
+    <h3>
+        <a href="catalogue/book_2/index.html"
+           title="Book Two">
+            Book Two
+        </a>
+    </h3>
+    <p class="price_color">£20.00</p>
+    <p class="instock availability">In stock</p>
+    <p class="star-rating Five"></p>
+</article>
+</body>
+</html>
+"""
+
 
 def test_parse_price():
     assert parse_price("£51.77") == 51.77
@@ -56,3 +98,29 @@ def test_scrape_books(mock_get):
     assert books[0]["price"] == 19.99
     assert books[0]["availability"] is True
     assert books[0]["rating"] == 3
+
+@patch("webscraper.scraper.session.get")
+def test_scrape_books_pagination(mock_get):
+    response_page_1 = Mock()
+    response_page_1.content = TEST_HTML_PAGE_1.encode("utf-8")
+    response_page_1.raise_for_status.return_value = None
+
+    response_page_2 = Mock()
+    response_page_2.content = TEST_HTML_PAGE_2.encode("utf-8")
+    response_page_2.raise_for_status.return_value = None
+
+    mock_get.side_effect = [response_page_1, response_page_2]
+
+    books = scrape_books("https://books.toscrape.com/")
+
+    assert len(books) == 2
+
+    assert books[0]["title"] == "Book One"
+    assert books[0]["price"] == 10.00
+    assert books[0]["rating"] == 1
+
+    assert books[1]["title"] == "Book Two"
+    assert books[1]["price"] == 20.00
+    assert books[1]["rating"] == 5
+
+    assert mock_get.call_count == 2
