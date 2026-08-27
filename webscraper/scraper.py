@@ -31,11 +31,25 @@ COLUMNS = [
     "url",
 ]
 
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET"],
+)
+
+session = requests.Session()
+session.headers.update({"User-Agent": USER_AGENT})
+
+adapter = HTTPAdapter(max_retries=retry_strategy)
+
+session.mount("https://", adapter)
+session.mount("http://", adapter)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
-
 logger = logging.getLogger(__name__)
 
 def scrape_books(url: str) -> list[dict]:
@@ -43,22 +57,6 @@ def scrape_books(url: str) -> list[dict]:
     page_number = 1
 
     while url:
-        session = requests.Session()
-
-        session.headers.update({"User-Agent": USER_AGENT})
-
-        retry_strategy = Retry(
-            total=3,
-            backoff_factor=1,
-            status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["GET"],
-        )
-
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-
-        session.mount("https://", adapter)
-        session.mount("http://", adapter)
-
         try:
             response = session.get(url, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
@@ -75,7 +73,7 @@ def scrape_books(url: str) -> list[dict]:
             f"{len(page_books)}冊"
         )
 
-        for article in soup.select("article.product_pod"):
+        for article in page_books:
             title = article.select_one("h3 a")
             price = article.select_one(".price_color")
             availability = article.select_one(".availability")
@@ -88,15 +86,13 @@ def scrape_books(url: str) -> list[dict]:
                     "title": title["title"] if title else None,
                     "price": (parse_price(price.get_text(strip=True)) if price else None),
                     "availability": (
-                        availability.get_text(" ", strip=True)
+                        parse_availability(
+                            availability.get_text(" ", strip=True)
+                        )
                         if availability
                         else None
                     ),
-                    "url": (
-                        urljoin(url, title["href"])
-                        if title
-                        else None
-                    ),
+                    "url": (urljoin(url, title["href"]) if title else None),
                     "rating": rating_value,
                 }
             )
