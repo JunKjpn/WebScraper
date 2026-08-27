@@ -81,15 +81,7 @@ def scrape_books(url: str) -> list[dict]:
             availability = article.select_one(".availability")
             rating = article.select_one(".star-rating")
 
-            rating_value = None
-
-            if rating:
-                rating_classes = rating.get("class", [])
-
-                for class_name in rating_classes:
-                    if class_name in RATING_MAP:
-                        rating_value = RATING_MAP[class_name]
-                        break
+            rating_value = (parse_rating(rating.get("class", [])) if rating else None)
 
             books.append(
                 {
@@ -177,6 +169,13 @@ def parse_price(price: str) -> float:
 
 def parse_availability(availability: str) -> bool:
     return "In stock" in availability
+
+def parse_rating(rating_classes: list[str]) -> int | None:
+    for class_name in rating_classes:
+        if class_name in RATING_MAP:
+            return RATING_MAP[class_name]
+
+    return None
 
 def create_dataframe(books: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(books, columns=COLUMNS)

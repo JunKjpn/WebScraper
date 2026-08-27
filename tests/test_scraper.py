@@ -1,5 +1,4 @@
-from webscraper.scraper import parse_price
-from webscraper.scraper import parse_availability
+from webscraper.scraper import parse_price, parse_availability, parse_rating
 
 
 def test_parse_price():
@@ -9,3 +8,9 @@ def test_parse_price():
 def test_parse_availability():
     assert parse_availability("In stock") is True
     assert parse_availability("Out of stock") is False
+
+def test_parse_rating():
+    assert parse_rating(["star-rating", "One"]) == 1
+    assert parse_rating(["star-rating", "Three"]) == 3
+    assert parse_rating(["star-rating", "Five"]) == 5
+    assert parse_rating(["star-rating", "Unknown"]) is None
