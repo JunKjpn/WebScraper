@@ -12,6 +12,7 @@ REQUEST_INTERVAL = 1
 
 def scrape_books(url: str) -> list[dict]:
     books = []
+    page_number = 1
 
     while url:
         session = requests.Session()
@@ -26,6 +27,13 @@ def scrape_books(url: str) -> list[dict]:
             break
 
         soup = BeautifulSoup(response.content, "html.parser")
+
+        page_books = soup.select("article.product_pod")
+
+        print(
+            f"{page_number}ページ目を取得中... "
+            f"{len(page_books)}冊"
+        )
 
         for article in soup.select("article.product_pod"):
             title = article.select_one("h3 a")
@@ -53,6 +61,7 @@ def scrape_books(url: str) -> list[dict]:
 
         if next_link:
             url = urljoin(url, next_link["href"])
+            page_number += 1
         else:
             url = None
 
