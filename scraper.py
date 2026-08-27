@@ -1,5 +1,6 @@
 import logging
 import time
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -11,7 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 URL = "https://books.toscrape.com/"
-OUTPUT_FILE = Path("output/books.csv")
+OUTPUT_DIR = Path("output")
 REQUEST_TIMEOUT = 10
 REQUEST_INTERVAL = 1
 USER_AGENT = "Mozilla/5.0"
@@ -143,7 +144,9 @@ def main():
     logger.info(f"取得件数: {len(df)}")
     print(df.head())
 
-    save_to_csv(df, OUTPUT_FILE)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = OUTPUT_DIR / f"books_{timestamp}.csv"
+    save_to_csv(df, output_file)
 
 
 if __name__ == "__main__":
