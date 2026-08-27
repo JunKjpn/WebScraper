@@ -2,7 +2,7 @@ from unittest.mock import patch, Mock
 
 import requests
 
-from webscraper.scraper import parse_price, parse_availability, parse_rating, scrape_books
+from webscraper.scraper import parse_price, parse_availability, parse_rating, scrape_books, validate_books
 
 TEST_HTML = """
 <html>
@@ -135,3 +135,68 @@ def test_scrape_books_request_error(mock_get):
 
     assert books == []
     assert mock_get.call_count == 1
+
+def test_validate_books():
+    books = [
+        {
+            "title": "Valid Book",
+            "price": 20.0,
+            "availability": True,
+            "rating": 4,
+            "url": "https://example.com/valid",
+        },
+        {
+            "title": "",
+            "price": 20.0,
+            "availability": True,
+            "rating": 4,
+            "url": "https://example.com/no-title",
+        },
+        {
+            "title": "Negative Price",
+            "price": -10.0,
+            "availability": True,
+            "rating": 4,
+            "url": "https://example.com/negative",
+        },
+        {
+            "title": "Invalid Rating",
+            "price": 20.0,
+            "availability": True,
+            "rating": 6,
+            "url": "https://example.com/invalid-rating",
+        },
+        {
+            "title": "Invalid Availability",
+            "price": 20.0,
+            "availability": "In stock",
+            "rating": 4,
+            "url": "https://example.com/invalid-availability",
+        },
+        {
+            "title": "No URL",
+            "price": 20.0,
+            "availability": True,
+            "rating": 4,
+            "url": None,
+        },
+        {
+            "title": "No Price",
+            "price": None,
+            "availability": True,
+            "rating": 4,
+            "url": "https://example.com/no-price",
+        },
+        {
+            "title": "No Rating",
+            "price": 20.0,
+            "availability": True,
+            "rating": None,
+            "url": "https://example.com/no-rating",
+        },
+    ]
+
+    valid_books = validate_books(books)
+
+    assert len(valid_books) == 1
+    assert valid_books[0]["title"] == "Valid Book"
