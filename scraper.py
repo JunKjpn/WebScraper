@@ -1,3 +1,4 @@
+import logging
 import time
 
 import requests
@@ -12,6 +13,13 @@ REQUEST_TIMEOUT = 10
 REQUEST_INTERVAL = 1
 USER_AGENT = "Mozilla/5.0"
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
 def scrape_books(url: str) -> list[dict]:
     books = []
     page_number = 1
@@ -24,15 +32,14 @@ def scrape_books(url: str) -> list[dict]:
             response = session.get(url, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
         except requests.RequestException as e:
-            print(f"取得に失敗しました: {url}")
-            print(f"エラー: {e}")
+            logger.error(f"取得に失敗しました: {url} - {e}")
             break
 
         soup = BeautifulSoup(response.content, "html.parser")
 
         page_books = soup.select("article.product_pod")
 
-        print(
+        logger.info(
             f"{page_number}ページ目を取得中... "
             f"{len(page_books)}冊"
         )
@@ -81,7 +88,7 @@ def main():
     books = scrape_books(URL)
     df = create_dataframe(books)
 
-    print(f"取得件数: {len(df)}")
+    logger.info(f"取得件数: {len(df)}")
     print(df.head())
 
     save_to_csv(df, OUTPUT_FILE)
