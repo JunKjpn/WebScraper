@@ -134,6 +134,27 @@ def validate_books(books: list[dict]) -> list[dict]:
             )
             continue
 
+        if book["rating"] is None:
+            logger.warning(
+                f"評価が取得できないデータを除外しました: "
+                f"{book['title']}"
+            )
+            continue
+
+        if not 1 <= book["rating"] <= 5:
+            logger.warning(
+                f"不正な評価のデータを除外しました: "
+                f"{book['title']}"
+            )
+            continue
+
+        if not isinstance(book["availability"], bool):
+            logger.warning(
+                f"在庫情報が不正なデータを除外しました: "
+                f"{book['title']}"
+            )
+            continue
+
         if not book["url"]:
             logger.warning(
                 f"URLが取得できないデータを除外しました: {book['title']}"
