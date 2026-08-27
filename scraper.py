@@ -14,7 +14,7 @@ def scrape_books(url: str) -> list[dict]:
         response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.content, "html.parser")
 
         for article in soup.select("article.product_pod"):
             title = article.select_one("h3 a")
@@ -24,9 +24,15 @@ def scrape_books(url: str) -> list[dict]:
             books.append(
                 {
                     "title": title["title"] if title else None,
-                    "price": price.get_text(strip=True) if price else None,
+                    "price": (
+                        parse_price(price.get_text(strip=True))
+                        if price
+                        else None
+                    ),
                     "availability": (
-                        availability.get_text(" ", strip=True)
+                        parse_availability(
+                            availability.get_text(" ", strip=True)
+                        )
                         if availability
                         else None
                     ),
@@ -47,6 +53,11 @@ def scrape_books(url: str) -> list[dict]:
 
     return books
 
+def parse_price(price: str) -> float:
+    return float(price.replace("£", "").replace("Â", "").strip())
+
+def parse_availability(availability: str) -> bool:
+    return "In stock" in availability
 
 def main():
     books = scrape_books(URL)
