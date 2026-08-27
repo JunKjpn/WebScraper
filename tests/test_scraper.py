@@ -1,9 +1,10 @@
 from unittest.mock import patch, Mock
 
+import pandas as pd
 import requests
 
 from webscraper.scraper import parse_price, parse_availability, parse_rating, scrape_books, validate_books, \
-    create_dataframe
+    create_dataframe, save_to_csv
 
 TEST_HTML = """
 <html>
@@ -239,3 +240,37 @@ def test_create_dataframe():
     assert df.loc[0, "price"] == 19.99
     assert df.loc[0, "availability"] == True
     assert df.loc[0, "rating"] == 3
+
+def test_save_to_csv(tmp_path):
+    books = [
+        {
+            "title": "Book One",
+            "price": 19.99,
+            "availability": True,
+            "rating": 3,
+            "url": "https://example.com/book-one",
+        },
+    ]
+
+    df = create_dataframe(books)
+
+    output_file = tmp_path / "books.csv"
+
+    save_to_csv(df, output_file)
+
+    assert output_file.exists()
+
+    saved_df = pd.read_csv(output_file, encoding="utf-8-sig")
+
+    assert list(saved_df.columns) == [
+        "title",
+        "price",
+        "availability",
+        "rating",
+        "url",
+    ]
+
+    assert len(saved_df) == 1
+    assert saved_df.loc[0, "title"] == "Book One"
+    assert saved_df.loc[0, "price"] == 19.99
+    assert saved_df.loc[0, "rating"] == 3
