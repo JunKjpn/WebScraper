@@ -83,7 +83,7 @@ pytest
 ### 1. リポジトリを取得
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/JunKjpn/WebScraper.git
 cd WebScraper
 ```
 
